@@ -1,5 +1,13 @@
 Employee_Tracker
 
+This is a mySQL app that allows the user to view a company's employee structure.
+
+![CODE SCREENSHOT](./employee_tracker_screenshot.png)
+
+View it in action: https://youtu.be/UhqRZ_p74UQ
+
+Historic day-to-day updates:
+
 061147LOCT2020
 
 Completely deleted old repo, started a new one.
