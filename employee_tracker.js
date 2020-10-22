@@ -11,7 +11,7 @@ var connection = mysql.createConnection({
   user: "root",
 
   // Your password
-  password: " p a s s w o r d ",
+  password: "p a s s w o r d",
   database: "employeesDB"
 });
 
@@ -134,13 +134,32 @@ function employeeSearch() {
 }
 
 function departmentSearch() {
-  let sqlQuery = "SELECT employee.first_name AS employee, department.name AS department FROM employee LEFT JOIN department ON employee.department_id = department.id";
-	connection.query(sqlQuery, (error, results) => {
+  let sqlQuery = 'SELECT * FROM department';
+  connection.query(sqlQuery, (error, results) => {
 		if (error) throw error;
-		console.table(results);
-		connection.end();
-	});
-}
+    const departments=results.map(result => ({value:result.id, name:result.name}))
+    inquirer
+    .prompt([
+      {
+        type: 'list',
+        name: 'id',
+        message: 'Please Select a Department',
+        choices: departments
+
+      }
+      
+    ]).then(response => {
+      let sqlQuery = "SELECT employee.id, CONCAT(employee.first_name,' ', employee.last_name) as name, role.title AS Title FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department department ON role.department_id = department.id WHERE department.id = ?";
+      connection.query(sqlQuery, response.id, (error, results) => {
+        if (error) throw error;
+        console.table(results);
+        connection.end();
+      });
+    })
+
+ 
+});
+};
 
 function managerSearch() {
   
@@ -230,26 +249,45 @@ const addDepartment = () => {
           }
         });
 			});
-		});
+    });
+    
 };
 
 
 const addRole = () => {
-	//ask user department name
+  //ask user role name
+  const sqlQuery="SELECT * FROM department"
+  connection.query(sqlQuery, (error, results) => {
+    if (error) throw error;
+    const departments=results.map(result => ({value:result.id, name:result.name}))
+    console.log(departments);
 	inquirer
 		.prompt([
 			{
 				type: 'input', 
-				name: 'role title',
-				message: 'Please, insert a name of a new job role',
+				name: 'title',
+        message: 'Please, insert a name of a new job role',
+      },
+   
+      {   
+        type: 'input', 
+				name: 'salary',
+				message: 'Please specify a salary amount',
+      },
+      {   
+        type: 'list', 
+				name: 'department_id',
+        message: 'Please choose a department',
+        choices:departments
 			},
 		])
 		.then(response => {
+      console.log(response);
 			let sqlQuery = 'INSERT INTO role SET ?'; 
 			let role = {
-				name: response.role_title, //database is expecting and object with key = to column name
+				title: response.roleTitle, //database is expecting and object with key = to column name
 			};
-			connection.query(sqlQuery, role, (error, results) => {
+			connection.query(sqlQuery, response, (error, results) => {
 				if (error) throw error;
 				console.log('New job role has been successfully created');
         // connection.end();
@@ -281,31 +319,88 @@ const addRole = () => {
           }
         });
 			});
-		});
+    });
+  });
 };
 
 function addEmployee() {
   //ask user employee name
-	inquirer
-		.prompt([
-			{
-				type: 'input', 
-				name: 'employee_name',
-				message: 'Please, insert a name of new employee',
-			},
-		])
-		.then(response => {
-			let sqlQuery = 'INSERT INTO employee SET ?'; 
-			let dep = {
-				name: response.employee_first_name, //database is expecting and object with key = to column name
-			};
-			connection.query(sqlQuery, dep, (error, results) => {
-				if (error) throw error;
-				console.log('New employee has been successfully created');
-				connection.end();
-			});
-		});
-}
+    connection.query("SELECT * FROM role", (error, results) => {
+      if (error) throw error;
+      const roles=results.map(result => ({value:result.id, name:result.title}))
+    const sqlQuery="SELECT * FROM employee"
+    connection.query(sqlQuery, (error, results) => {
+      if (error) throw error;
+      const manager=results.map(result => ({value:result.id, name:result.first_name + " " + result.last_name}))
+      manager.push({name: "No Manager", value:null})
+
+    inquirer
+      .prompt([
+        {
+          type: 'input', 
+          name: 'first_name',
+          message: 'What is employee first name?',
+        },
+     
+        {   
+          type: 'input', 
+          name: 'last_name',
+          message: 'What is employee last name?',
+        },
+        {   
+          type: 'list', 
+          name: 'role_id',
+          message: 'What is employee role?',
+          choices: roles
+        },
+        {
+          type: 'list', 
+          name: 'manager_id',
+          message: 'Select Employee Manager',
+          choices: manager
+        }
+      ])
+      .then(response => {
+        console.log(response);
+        let sqlQuery = 'INSERT INTO employee SET ?'; 
+        let role = {
+          title: response.roleTitle, //database is expecting and object with key = to column name
+        };
+        connection.query(sqlQuery, response, (error, results) => {
+          if (error) throw error;
+          console.log('New employee has been successfully created');
+          // connection.end();
+          inquirer
+          .prompt({
+            name: "action",
+            type: "rawlist",
+            message: "What would you like to do?",
+            choices: [
+         
+              "Start Over",
+              "Quit"
+            ]
+          })
+          .then(function(answer) {
+            switch (answer.action) {
+      
+            case "Start Over":
+              runSearch();
+              break;
+      
+            case "Quit":
+              console.log(`
+        ----------------------------------------------------------------
+        --                       G O O D  B Y E                       --
+        ----------------------------------------------------------------
+          `);
+              connection.end();
+            }
+          });
+        });
+      });
+    });
+})};
 
 function updateEmployee() {
   
