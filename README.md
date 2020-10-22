@@ -8,6 +8,13 @@ View it in action: https://youtu.be/UhqRZ_p74UQ
 
 Historic day-to-day updates:
 
+221339LOCT2020
+
+Received poor marks and helpful comments from the grading team.  
+
+Uploaded new video with revisions:
+https://youtu.be/5cYpGdNTd6Y
+
 061147LOCT2020
 
 Completely deleted old repo, started a new one.
